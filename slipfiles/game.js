@@ -95,12 +95,22 @@ const overlay = document.getElementById('message-overlay');
 
 function startTimer()
 {
+    timerInterval = setInterval(() => {
+        secondsRemain--;
+        timerElement.innerText = secondsRemain; 
 
+        if (secondsRemain <= 0)
+        {
+            clearInterval(timerInterval);
+            endGame();
+        }
+    }, 1000);
 }
 
 function startingGame()
 {
     overlay.classList.add('hidden');
+    startTimer();
     animate();
 }
 
