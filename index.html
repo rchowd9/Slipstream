@@ -1,1 +1,31 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slipstream | 1v1 Dash-Fighter</title>
+    <link rel = "stylesheet" href = "style.css">
 
+</head>
+<body>
+    <div id = "game-container">
+        <div id = "ui-layer">
+            <div class = "health-container">
+                <div id = "player1-health" class = "health-bar"></div>
+                <div class = "player-name">Player1</div>
+            </div>
+            <div id = "timer">60</div>
+            <div class = "health-container">
+                <div id = "player2-health" class = "health-bar"></div>
+                <div class = "player-name" style = "text-align: right"></div>
+            </div>
+        </div>
+
+        <canvas id = "gameCanvas"></canvas>
+        <div id = "message-overlay">
+            <h1 id = "status-message">READY?</h1>
+        </div>
+    </div>
+
+    <script src = "game.js"></script>
+</body>
+</html>
