@@ -120,6 +120,8 @@ function startingGame()
 
 function endGame()
 {
+    document.getElementById('status-message').innerText = 'TIMES UP';
+    overlay.classList.remove('hidden');
     player1.state = 'RECOVERY';
     player2.state = 'RECOVERY';
 }
