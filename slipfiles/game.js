@@ -154,6 +154,22 @@ function animate()
 
     player1.update();
     player2.update();
+
+    if (
+        rectangleCollision({ rectangle1: player1, rectangle2: player2 }) &&
+        player1.state === 'SLIPSTREAM' && !player2.isIntangible
+    ) {
+        console.log('Player 1 Hit!');
+        document.getElementById('player2-health').style.width = '0%';
+    }
+
+    if (
+        rectangleCollision({ rectangle1: player2, rectangle2: player1 }) &&
+        player2.state === 'SLIPSTREAM' && !player1.isIntangible
+    ) {
+        console.log('Player 2 Hit!');
+        document.getElementById('player1-health').style.width = '0%';
+    }
 }
 
 setTimeout(startingGame, 1500);
