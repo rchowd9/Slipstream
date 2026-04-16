@@ -8,6 +8,10 @@ const GRAVITY = 0.7;
 const DASH_DURATION = 200;
 const RECOVERY_TIME = 300;
 
+const timerElement = document.getElementById('timer');
+let secondsRemain = 60;
+let timerInterval;
+
 class Player 
 {
     constructor({ position, color, offset, isPlayer2 = false })
