@@ -120,7 +120,8 @@ function startingGame()
 
 function endGame()
 {
-    
+    player1.state = 'RECOVERY';
+    player2.state = 'RECOVERY';
 }
 
 window.addEventListener('keydown', ({ key}) => {
