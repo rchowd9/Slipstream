@@ -155,6 +155,13 @@ function rectangleCollision({rectangle1, rectangle2})
     );
 }
 
+function updatingAI()
+{
+    if (player2.state !== 'NEUTRAL') return;
+
+    const distance = player2.position.x - player1.position.x;
+}
+
 function animate()
 {
     window.requestAnimationFrame(animate);
