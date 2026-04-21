@@ -11,6 +11,7 @@ const RECOVERY_TIME = 300;
 const timerElement = document.getElementById('timer');
 let secondsRemain = 60;
 let timerInterval;
+let gameRunning = true;
 
 class Player 
 {
@@ -29,12 +30,17 @@ class Player
 
     draw() 
     {
-        if (this.state === 'SLIPSTREAM') {
+        if (this.state === 'SLIPSTREAM') 
+        {
             ctx.globalAlpha = 0.5;
             ctx.fillStyle = 'white';
-        } else if (this.state === 'RECOVERY') {
+        } 
+        else if (this.state === 'RECOVERY') 
+        {
             ctx.fillStyle = 'gray';
-        } else {
+        } 
+        else 
+        {
             ctx.fillStyle = this.color;
         }
 
@@ -45,8 +51,22 @@ class Player
     update() 
     {
         this.draw();
-        this.position.x += this.velocity.x;
-        this.position.y += this.velocity.y;
+
+        if (gameRunning) 
+        {
+            this.position.x += this.velocity.x;
+            this.position.y += this.velocity.y;
+        }
+
+        if (this.position.x < 0) 
+        {
+            this.position.x = 0;
+        }
+
+        if (this.position.x + this.width > canvas.width) 
+        {
+            this.position.x = canvas.width - this.width;
+        }
 
         if (this.position.y + this.height + this.velocity.y >= canvas.height - 60) 
         {
@@ -62,7 +82,7 @@ class Player
 
     dash(direction) 
     {
-        if (this.state !== 'NEUTRAL') 
+        if (this.state !== 'NEUTRAL' || !gameRunning) 
         {
             return;
         }
@@ -100,13 +120,15 @@ const overlay = document.getElementById('message-overlay');
 function startTimer()
 {
     timerInterval = setInterval(() => {
-        secondsRemain--;
-        timerElement.innerText = secondsRemain; 
+        if (gameRunning) {
+            secondsRemain--;
+            timerElement.innerText = secondsRemain;
 
-        if (secondsRemain <= 0)
-        {
-            clearInterval(timerInterval);
-            endGame();
+            if (secondsRemain <= 0)
+            {
+                clearInterval(timerInterval);
+                endGame("TIME'S UP!");
+            }
         }
     }, 1000);
 }
@@ -118,29 +140,22 @@ function startingGame()
     animate();
 }
 
-function endGame()
+function endGame(message = 'GAME OVER')
 {
-    document.getElementById('status-message').innerText = 'TIMES UP';
+    gameRunning = false;
+    document.getElementById('status-message').innerText = message;
     overlay.classList.remove('hidden');
-    player1.state = 'RECOVERY';
-    player2.state = 'RECOVERY';
+    clearInterval(timerInterval);
 }
 
 window.addEventListener('keydown', ({ key}) => {
+    if (!gameRunning) return;
     switch(key) {
         case 'd':
             player1.dash(1);
             break;
         case 'a':
             player1.dash(-1);
-            break;
-
-        case 'ArrowRight':
-            player2.dash(1);
-            break;
-
-        case 'ArrowLeft':
-            player2.dash(-1);
             break;
     }
 });
@@ -160,6 +175,21 @@ function updatingAI()
     if (player2.state !== 'NEUTRAL') return;
 
     const distance = player2.position.x - player1.position.x;
+
+    if (Math.abs(distance) < 300) {
+        let direction;
+        
+        
+        if (distance > 0) {
+            direction = -1;
+        } 
+        
+        else {
+            direction = 1;
+        }
+
+        player2.dash(direction);
+    }
 }
 
 function animate()
@@ -172,21 +202,22 @@ function animate()
     player1.update();
     player2.update();
 
-    if (
-        rectangleCollision({ rectangle1: player1, rectangle2: player2 }) &&
-        player1.state === 'SLIPSTREAM' && !player2.isIntangible
-    ) {
-        console.log('Player 1 Hit!');
-        document.getElementById('player2-health').style.width = '0%';
+    if (gameRunning) {
+        updatingAI();
+
+        if (rectangleCollision({ rectangle1: player1, rectangle2: player2 }) &&
+            player1.state === 'SLIPSTREAM' && !player2.isIntangible) {
+            document.getElementById('player2-health').style.width = '0%';
+            endGame("PLAYER 1 WINS");
+        }
+
+        if (rectangleCollision({ rectangle1: player2, rectangle2: player1 }) &&
+            player2.state === 'SLIPSTREAM' && !player1.isIntangible) {
+            document.getElementById('player1-health').style.width = '0%';
+            endGame("AI WINS");
+        }
     }
 
-    if (
-        rectangleCollision({ rectangle1: player2, rectangle2: player1 }) &&
-        player2.state === 'SLIPSTREAM' && !player1.isIntangible
-    ) {
-        console.log('Player 2 Hit!');
-        document.getElementById('player1-health').style.width = '0%';
-    }
 }
 
 setTimeout(startingGame, 1500);
