@@ -7,5 +7,7 @@ Software Engineering Class Project
 
 # Tech Stack
 HTML
+
 CSS
+
 Javascript
