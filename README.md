@@ -10,4 +10,4 @@ HTML
 
 CSS
 
-Javascript
+JavaScript
