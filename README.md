@@ -14,3 +14,5 @@ HTML - structure for creating webpages
 CSS - styling
 
 JavaScript - programming language
+
+# How To Run The Project
