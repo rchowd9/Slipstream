@@ -7,8 +7,8 @@ Software Engineering Class Project
 
 
 # Tech Stack
-HTML
+HTML - structure for creating webpages
 
 CSS - styling
 
-JavaScript
+JavaScript - programming language
