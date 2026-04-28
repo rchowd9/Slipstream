@@ -16,6 +16,8 @@ CSS - styling
 JavaScript - programming language
 
 # How To Run The Project
-1
-2
-3
+1) 
+
+2)
+
+3)
