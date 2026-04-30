@@ -23,3 +23,5 @@ JavaScript - programming language
 2) Right click index.html and press Open with Live Server
 
 3) Browser will open at http://127.0.0.1:5500/index.html
+
+# Browser Compatability
