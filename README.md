@@ -25,3 +25,5 @@ JavaScript - programming language
 3) Browser will open at http://127.0.0.1:5500/index.html
 
 # Browser Compatability
+The application works on browsers such as:
+' - Microsoft Edge
