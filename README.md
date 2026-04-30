@@ -18,6 +18,6 @@ JavaScript - programming language
 # How To Run The Project
 1) Open the Project in Visual Studio
 
-2)
+2) Right click index.html and press Open with Live Server
 
-3)
+3) Browser will open at http://127.0.0.1:5500/index.html
