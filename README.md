@@ -26,4 +26,4 @@ JavaScript - programming language
 
 # Browser Compatability
 The application works on browsers such as:
-' - Microsoft Edge
+` - Microsoft Edge
