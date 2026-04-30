@@ -16,7 +16,7 @@ CSS - styling
 JavaScript - programming language
 
 # How To Run The Project
-1) 
+1) Open the Project in Visual Studio
 
 2)
 
