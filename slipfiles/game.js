@@ -177,35 +177,15 @@ function updatingAI()
     const distance = player2.position.x - player1.position.x;
     const absDistance = Math.abs(distance);
 
-    if (absDistance < 300 && absDistance > 150) 
+    if (absDistance < 300 && absDistance > 150 && Math.random() < 0.02) 
     {
-        let direction;
-        
-        
-        if (distance > 0) 
-        {
-            direction = -1;
-        } 
-        
-        else 
-        {
-            direction = 1;
-        }
-
         player2.dash(direction);
     }
 
     else if (absDistance < 150)
     {
-        let direction;
-        if (distance > 0)
-        {
-            direction = 1;
-        }
-        else
-        {
-            direction = -1;
-        }
+        const direction = distance > 0 ? 1 : -1;
+        player2.dash(direction);
     }
 }
 
