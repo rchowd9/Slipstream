@@ -26,6 +26,17 @@ class Player
 
         this.state = 'NEUTRAL';
         this.isIntangible = false;
+        this.health = 100;
+    }
+
+    takeDamage(amount)
+    {
+        this.health -= amount;
+        if (this.health < 0) this.health = 0;
+
+        const id = this.isPlayer2 ? 'player2-health' : 'player1-health';
+        const healthBar = document.getElementById(id);
+        if (healthBar) healthBar.style.width = this.health + '%';
     }
 
     draw() 
@@ -140,16 +151,46 @@ function startingGame()
     animate();
 }
 
+function resetGame()
+{
+    gameRunning = true;
+    secondsRemain = 60;
+    timerElement.innerText = secondsRemain;
+
+    player1.position = { x: 100, y: 0 };
+    player1.velocity = { x: 0, y: 0 };
+    player1.state = 'NEUTRAL';
+    player1.health = 100;
+
+    player2.position = { x: 800, y: 0 };
+    player2.velocity = { x: 0, y: 0 };
+    player2.state = 'NEUTRAL';
+    player2.health = 100;
+
+    document.getElementById('player1-health').style.width = '100%';
+    document.getElementById('player2-health').style.width = '100%';
+
+    overlay.classList.add('hidden');
+    startTimer();
+}
+
+
 function endGame(message = 'GAME OVER')
 {
     gameRunning = false;
-    document.getElementById('status-message').innerText = message;
+    document.getElementById('status-message').innerText = message + "\nPress 'R' to Play Again";
     overlay.classList.remove('hidden');
     clearInterval(timerInterval);
 }
 
-window.addEventListener('keydown', ({ key}) => {
+window.addEventListener('keydown', ({ key }) => {
+    if (!gameRunning && key === 'r') {
+        resetGame();
+        return;
+    }
+
     if (!gameRunning) return;
+
     switch(key) {
         case 'd':
             player1.dash(1);
@@ -170,22 +211,37 @@ function rectangleCollision({rectangle1, rectangle2})
     );
 }
 
-function updatingAI()
-{
+function updatingAI() {
     if (player2.state !== 'NEUTRAL') return;
 
     const distance = player2.position.x - player1.position.x;
     const absDistance = Math.abs(distance);
-
-    if (absDistance < 300 && absDistance > 150 && Math.random() < 0.02) 
-    {
-        player2.dash(direction);
+    
+   
+    const detectionRange = 600; 
+    if (absDistance > detectionRange) {
+        player2.velocity.x = 0;
+        return;
     }
 
-    else if (absDistance < 150)
-    {
+    
+    if (absDistance <= 300 && absDistance >= 150) {
+        if (Math.random() < 0.02) {
+            const direction = distance > 0 ? -1 : 1;
+            player2.dash(direction);
+        } else {
+            player2.velocity.x = 0;
+        }
+    }
+
+    
+    else if (absDistance < 150) {
         const direction = distance > 0 ? 1 : -1;
         player2.dash(direction);
+    }
+    
+    else if (absDistance > 300) {
+        player2.velocity.x = distance > 0 ? -2 : 2;
     }
 }
 
@@ -196,6 +252,14 @@ function animate()
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    ctx.fillStyle = '#333';
+    ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
+
+    
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(0, canvas.height - 60, canvas.width, 1);
+
     player1.update();
     player2.update();
 
@@ -204,13 +268,13 @@ function animate()
 
         if (rectangleCollision({ rectangle1: player1, rectangle2: player2 }) &&
             player1.state === 'SLIPSTREAM' && !player2.isIntangible) {
-            document.getElementById('player2-health').style.width = '0%';
+            player2.takeDamage(100);
             endGame("PLAYER 1 WINS");
         }
 
         if (rectangleCollision({ rectangle1: player2, rectangle2: player1 }) &&
             player2.state === 'SLIPSTREAM' && !player1.isIntangible) {
-            document.getElementById('player1-health').style.width = '0%';
+            player1.takeDamage(100);
             endGame("AI WINS");
         }
     }
