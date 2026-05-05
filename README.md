@@ -12,9 +12,7 @@ There are three states, 'SLIPSTREAM', 'RECOVERY', 'NEUTRAL'
 
 # Tech Stack
 *HTML - structure for creating webpages
-
 *CSS - styling
-
 *JavaScript - programming language
 
 # How To Run The Project
