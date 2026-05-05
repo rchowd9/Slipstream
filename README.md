@@ -11,9 +11,9 @@ Landing a single successful strike while the opponent is recovering results in a
 There are three states, 'SLIPSTREAM', 'RECOVERY', 'NEUTRAL'
 
 # Tech Stack
-*HTML - structure for creating webpages
-*CSS - styling
-*JavaScript - programming language
+* HTML - structure for creating webpages
+* CSS - styling
+* JavaScript - programming language
 
 # How To Run The Project
 1) Open the Project in Visual Studio
