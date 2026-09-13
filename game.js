@@ -50,9 +50,37 @@ const overlayAction = document.getElementById('overlay-action');
 
 const startButton = document.getElementById('start-button');
 const touchControls = document.getElementById('touch-controls');
+const cloudStatus = document.getElementById('cloud-status');
 
 let audioEnabled = true;
 let lastFrame = 0;
+
+async function checkCloudApi() {
+    try {
+        const response = await fetch('/api/health');
+        if (!response.ok) throw new Error('Cloud API unavailable');
+        cloudStatus.textContent = 'CLOUD SCORES: ONLINE';
+        cloudStatus.classList.add('online');
+    } catch {
+        cloudStatus.textContent = 'CLOUD SCORES: LOCAL MODE';
+    }
+}
+
+async function recordMatchResult() {
+    try {
+        await fetch('/api/matches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                player: 'PLAYER 1',
+                playerScore: game.scores.p1,
+                opponentScore: game.scores.p2
+            })
+        });
+    } catch {
+        // The match is still complete when the optional cloud API is offline.
+    }
+}
 
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -669,6 +697,7 @@ function endRound(winner) {
 function endMatch() {
     const winner = game.scores.p1 > game.scores.p2 ? 'PLAYER 1' : 'AI';
     game.state = STATE.GAME_OVER;
+    recordMatchResult();
     showMessage(`${winner} TAKES IT`, 'Tap restart to fight again', 'RESTART', startMatch);
     playEffect('win');
 }
@@ -1018,6 +1047,7 @@ window.addEventListener('blur', () => {
 });
 
 showStartMenu();
+checkCloudApi();
 requestAnimationFrame(timestamp => {
     lastFrame = timestamp;
     animate(timestamp);

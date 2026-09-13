@@ -236,6 +236,18 @@ canvas {
     font-size: 15px;
 }
 
+.cloud-status {
+    margin: 18px 0 0;
+    color: #ffbd6f;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.cloud-status.online {
+    color: #84ff8d;
+}
+
 .button-row {
     margin-top: 24px;
     display: flex;
@@ -294,6 +306,10 @@ canvas {
     border-radius: 999px;
 }
 
+#touch-controls.touch-hidden {
+    display: none;
+}
+
 #touch-controls button {
     font: inherit;
     appearance: none;
@@ -333,7 +349,7 @@ canvas {
         grid-template-columns: 1fr;
     }
 
-    #touch-controls {
+    #touch-controls.touch-hidden {
         display: grid;
     }
 }

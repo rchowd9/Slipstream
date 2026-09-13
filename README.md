@@ -1,29 +1,50 @@
 # Slipstream
 
-Software Engineering Class Project
+Slipstream is a 1v1 dash-fighter. Win best-of-three rounds by spacing, blocking, dashing, and landing attacks while the opponent is recovering.
 
-1v1 fighting game where players win by using a single move, the 'Dash'.
+## Stack
 
-Dash allows users to dodge incoming attacks, draw opponents into an unsafe position, and deal fatal damage to opponents with precision.
+- Vercel serves the static HTML, CSS, JavaScript, and canvas game.
+- C# .NET 8 isolated Azure Functions provide health checks and match results.
+- Azure Table Storage persists the leaderboard when `AzureWebJobsStorage` is configured.
+- Without Azure Storage, the API uses an in-memory store for local development.
 
-Landing a single successful strike while the opponent is recovering results in automatic KO. If you and the opponent dash at the same time, it results in a draw and you have to continue to dash until one is left standing. 
+## Run The Game
 
-There are three states, 'SLIPSTREAM', 'RECOVERY', 'NEUTRAL'
+Open `index.html` with Live Server, or serve the repository root with any static web server. The game also works directly in current Edge and Chrome browsers.
 
-# Tech Stack
-* HTML - structure for creating webpages
-* CSS - styling
-* JavaScript - programming language
+## Run The C# API
 
-# How To Run The Project
-1) Open the Project in Visual Studio
+Install the .NET 8 SDK and Azure Functions Core Tools, then run:
 
-2) Right click index.html and press Open with Live Server
+```powershell
+cd backend/Slipstream.Api
+Copy-Item local.settings.json.example local.settings.json
+func start
+```
 
-3) Browser will open at http://127.0.0.1:5500/index.html
+The API exposes:
 
-# Browser Compatability
-The application works on browsers such as:
-* Microsoft Edge
-* Google Chrome
-* Google
+- `GET /api/health`
+- `GET /api/leaderboard`
+- `POST /api/matches`
+
+For local Azure Storage emulation, start Azurite and set `AzureWebJobsStorage` to `UseDevelopmentStorage=true`. For Azure, replace it with the Storage Account connection string.
+
+## Deploy
+
+### Vercel frontend
+
+Import this repository into Vercel with the project root set to the repository root. There is no build command and no output directory. The included `vercel.json` rewrites `/api/*` to Azure Functions using the `AZURE_FUNCTIONS_HOST` environment variable.
+
+Set this Vercel environment variable to the Azure Functions host only, without `/api`:
+
+```text
+AZURE_FUNCTIONS_HOST=your-function-app.azurewebsites.net
+```
+
+### Azure backend
+
+Create an Azure Function App using the .NET 8 isolated worker, configure `AzureWebJobsStorage`, and deploy the `backend/Slipstream.Api` project using Visual Studio, VS Code, or `func azure functionapp publish <app-name>`.
+
+The browser game remains available on Vercel even when the optional API is not configured; it will show `CLOUD SCORES: LOCAL MODE` and continue to play normally.

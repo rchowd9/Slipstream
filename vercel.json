@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://$AZURE_FUNCTIONS_HOST/api/:path*"
+    }
+  ]
+}
