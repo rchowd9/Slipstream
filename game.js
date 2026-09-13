@@ -38,7 +38,11 @@ const ui = {
     player2Score: document.getElementById('player2-score'),
     roundLabel: document.getElementById('round-label'),
     pauseButton: document.getElementById('pause-button'),
-    audioToggle: document.getElementById('audio-toggle')
+    audioToggle: document.getElementById('audio-toggle'),
+    playerName: document.getElementById('player-name'),
+    difficulty: document.getElementById('difficulty-select'),
+    leaderboard: document.getElementById('leaderboard-list'),
+    combatStatus: document.getElementById('combat-status')
 };
 
 const overlay = document.getElementById('message-overlay');
@@ -54,6 +58,35 @@ const cloudStatus = document.getElementById('cloud-status');
 
 let audioEnabled = true;
 let lastFrame = 0;
+const difficultyProfiles = {
+    rookie: { label: 'ROOKIE', aggression: 0.65 },
+    veteran: { label: 'VETERAN', aggression: 1 },
+    apex: { label: 'APEX', aggression: 1.35 }
+};
+
+try {
+    ui.playerName.value = localStorage.getItem('slipstream.callsign') || ui.playerName.value;
+    ui.difficulty.value = localStorage.getItem('slipstream.profile') || ui.difficulty.value;
+} catch {
+    // Private browsing may block local storage; the defaults remain usable.
+}
+
+function getPlayerName() {
+    return (ui.playerName.value.trim() || 'PLAYER 1').slice(0, 24);
+}
+
+async function loadLeaderboard() {
+    try {
+        const response = await fetch('/api/leaderboard');
+        if (!response.ok) throw new Error('Leaderboard unavailable');
+        const entries = await response.json();
+        ui.leaderboard.innerHTML = entries.length
+            ? entries.slice(0, 5).map((entry, index) => `<div class="leaderboard-row"><span>${index + 1}. ${entry.player}</span><strong>${entry.wins}W / ${entry.losses}L</strong></div>`).join('')
+            : '<span>No pilots on the board yet.</span>';
+    } catch {
+        ui.leaderboard.innerHTML = '<span>Cloud board unavailable. Local mode active.</span>';
+    }
+}
 
 async function checkCloudApi() {
     try {
@@ -72,7 +105,7 @@ async function recordMatchResult() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                player: 'PLAYER 1',
+                player: getPlayerName(),
                 playerScore: game.scores.p1,
                 opponentScore: game.scores.p2
             })
@@ -385,6 +418,7 @@ class Player {
         this.stateTimer = 0.18;
         this.velocity.x = direction * 24 * this.speedMultiplier;
         this.facing = direction;
+        if (this === player1) game.stats.dashes += 1;
         playEffect('dash');
     }
 
@@ -406,7 +440,14 @@ class Player {
 
         if (attacker) {
             attacker.chargeMeter(15);
+            if (attacker === player1) {
+                game.stats.damage += amount;
+                game.stats.hits += 1;
+                game.stats.combo += 1;
+                game.stats.bestCombo = Math.max(game.stats.bestCombo, game.stats.combo);
+            }
         }
+        if (this === player1) game.stats.combo = 0;
 
         createImpact(this.position.x + this.width / 2, this.position.y + this.height / 2, 16, '#ff6f6f');
         playEffect('hit');
@@ -438,6 +479,7 @@ class Player {
         }
 
         playEffect('powerup');
+        if (this === player1) game.stats.powerups += 1;
     }
 
     updateEffects(delta) {
@@ -586,7 +628,9 @@ const game = {
     powerupTimer: 0,
     particles: [],
     powerups: [],
-    roundDelay: 0
+    roundDelay: 0,
+    difficulty: 'veteran',
+    stats: { hits: 0, damage: 0, dashes: 0, powerups: 0, combo: 0, bestCombo: 0 }
 };
 
 function updateUI() {
@@ -640,6 +684,8 @@ function startMatch() {
     game.roundNumber = 1;
     game.powerups = [];
     game.particles = [];
+    game.difficulty = ui.difficulty.value;
+    game.stats = { hits: 0, damage: 0, dashes: 0, powerups: 0, combo: 0, bestCombo: 0 };
     startRound();
 }
 
@@ -698,8 +744,10 @@ function endMatch() {
     const winner = game.scores.p1 > game.scores.p2 ? 'PLAYER 1' : 'AI';
     game.state = STATE.GAME_OVER;
     recordMatchResult();
-    showMessage(`${winner} TAKES IT`, 'Tap restart to fight again', 'RESTART', startMatch);
+    const stats = game.stats;
+    showMessage(`${winner} TAKES IT`, `${difficultyProfiles[game.difficulty].label} // ${stats.hits} hits // ${Math.round(stats.damage)} damage // BEST COMBO ${stats.bestCombo} // ${stats.dashes} dashes`, 'REMATCH', startMatch);
     playEffect('win');
+    loadLeaderboard();
 }
 
 function spawnPowerup() {
@@ -742,32 +790,33 @@ function updateAI(delta) {
     const distance = player1.position.x - player2.position.x;
     const absDistance = Math.abs(distance);
     const direction = Math.sign(distance) || 1;
+    const profile = difficultyProfiles[game.difficulty];
 
     if (player2.stunTimer > 0) {
         return;
     }
 
-    if (player2.activeAttack === null && player2.attackCooldown <= 0 && absDistance < 170 && Math.random() < 0.14) {
+    if (player2.activeAttack === null && player2.attackCooldown <= 0 && absDistance < 170 && Math.random() < 0.14 * profile.aggression) {
         player2.attack();
     }
 
-    if (player2.dashCooldown <= 0 && absDistance > 250 && Math.random() < 0.04) {
+    if (player2.dashCooldown <= 0 && absDistance > 250 && Math.random() < 0.04 * profile.aggression) {
         player2.dash(direction);
     }
 
     if (absDistance > 120) {
-        if (Math.random() < 0.72) {
+        if (Math.random() < 0.72 * profile.aggression) {
             player2.move(direction);
         }
     } else {
         player2.velocity.x *= 0.92;
     }
 
-    if (player2.grounded && absDistance < 130 && Math.random() < 0.035) {
+    if (player2.grounded && absDistance < 130 && Math.random() < 0.035 * profile.aggression) {
         player2.jump();
     }
 
-    if (player2.health < 36 && Math.random() < 0.012) {
+    if (player2.health < 36 && Math.random() < 0.012 * profile.aggression) {
         player2.startBlock();
     }
     if (player2.isBlocking && Math.random() < 0.06) {
@@ -870,6 +919,10 @@ function drawEntities() {
 function drawHUD() {
     const timeColor = game.roundTimer < 10 ? '#ff6f6f' : '#d7e5ff';
     ui.timer.style.color = timeColor;
+    if (ui.combatStatus) {
+        ui.combatStatus.textContent = game.stats.combo > 1 ? `COMBO x${game.stats.combo}` : `${difficultyProfiles[game.difficulty].label} PROFILE`;
+        ui.combatStatus.classList.toggle('combo-live', game.stats.combo > 1);
+    }
 }
 
 function animate(timestamp) {
@@ -984,6 +1037,23 @@ ui.audioToggle.addEventListener('click', () => {
     ui.audioToggle.textContent = audioEnabled ? 'AUDIO ON' : 'AUDIO OFF';
 });
 
+ui.playerName.addEventListener('input', () => {
+    ui.playerName.value = ui.playerName.value.replace(/[^a-z0-9 _-]/gi, '').slice(0, 24);
+    try {
+        localStorage.setItem('slipstream.callsign', ui.playerName.value);
+    } catch {
+        // The current callsign still works for this session.
+    }
+});
+
+ui.difficulty.addEventListener('change', () => {
+    try {
+        localStorage.setItem('slipstream.profile', ui.difficulty.value);
+    } catch {
+        // The selected profile still works for this session.
+    }
+});
+
 overlayAction.addEventListener('click', () => {
     if (overlayAction.onclick) {
         overlayAction.onclick();
@@ -1048,6 +1118,7 @@ window.addEventListener('blur', () => {
 
 showStartMenu();
 checkCloudApi();
+loadLeaderboard();
 requestAnimationFrame(timestamp => {
     lastFrame = timestamp;
     animate(timestamp);
