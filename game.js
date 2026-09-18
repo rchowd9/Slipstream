@@ -297,6 +297,7 @@ class Player {
         this.dashTimer = 0;
         this.dashCooldown = 0;
         this.attackCooldown = 0;
+        this.specialCooldown = 0;
         this.attackHit = false;
         this.activeAttack = null;
         this.stunTimer = 0;
@@ -345,6 +346,7 @@ class Player {
         this.dashTimer = 0;
         this.dashCooldown = 0;
         this.attackCooldown = 0;
+        this.specialCooldown = 0;
         this.attackHit = false;
         this.activeAttack = null;
         this.stunTimer = 0;
@@ -401,11 +403,36 @@ class Player {
             offsetY: 74,
             damage: 16,
             time: 0.16,
-            hit: false
+            hit: false,
+            special: false
         };
         this.state = 'ATTACK';
         this.stateTimer = 0.18;
         playEffect('attack');
+    }
+
+    useSpecial() {
+        if (this.health <= 0 || this.specialCooldown > 0 || this.meter < 100 || this.stunTimer > 0) return false;
+        this.meter = 0;
+        this.specialCooldown = 2.2;
+        this.isIntangible = true;
+        this.state = 'SPECIAL';
+        this.stateTimer = 0.4;
+        this.activeAttack = {
+            width: 120,
+            height: 36,
+            offsetX: 78,
+            offsetY: 58,
+            damage: 34,
+            time: 0.24,
+            hit: false,
+            special: true
+        };
+        this.attackCooldown = 0.8;
+        createImpact(this.position.x + this.width / 2, this.position.y + this.height / 2, 30, '#7fe7ff');
+        playEffect('powerup');
+        if (this === player1) game.stats.specials += 1;
+        return true;
     }
 
     dash(direction) {
@@ -424,6 +451,24 @@ class Player {
 
     takeDamage(amount, attacker = null) {
         if (this.health <= 0) return;
+
+        if (this.isBlocking && attacker && attacker.activeAttack && attacker.activeAttack.time > 0.06 && attacker.activeAttack.time < 0.18) {
+            const perfectBlockWindow = Math.abs(attacker.position.x - this.position.x) < 160;
+            if (perfectBlockWindow) {
+                this.chargeMeter(35);
+                this.state = 'PARRY';
+                this.stateTimer = 0.35;
+                this.isBlocking = false;
+                this.isIntangible = false;
+                attacker.activeAttack = null;
+                attacker.attackHit = true;
+                attacker.stunTimer = 0.35;
+                createImpact(this.position.x + this.width / 2, this.position.y + this.height / 2, 22, '#97ebff');
+                playEffect('powerup');
+                return;
+            }
+        }
+
         if (this.isBlocking) {
             amount *= 0.35;
         }
@@ -514,6 +559,7 @@ class Player {
 
         if (this.attackCooldown > 0) this.attackCooldown = Math.max(this.attackCooldown - delta, 0);
         if (this.dashCooldown > 0) this.dashCooldown = Math.max(this.dashCooldown - delta, 0);
+        if (this.specialCooldown > 0) this.specialCooldown = Math.max(this.specialCooldown - delta, 0);
         if (this.stunTimer > 0) this.stunTimer = Math.max(this.stunTimer - delta, 0);
         if (this.stateTimer > 0) this.stateTimer = Math.max(this.stateTimer - delta, 0);
 
@@ -564,6 +610,11 @@ class Player {
             if (this.activeAttack.time <= 0) {
                 this.activeAttack = null;
                 this.attackHit = false;
+                if (this.state === 'SPECIAL') {
+                    this.isIntangible = false;
+                    this.state = 'RECOVER';
+                    this.stateTimer = 0.16;
+                }
             }
         }
 
@@ -630,7 +681,7 @@ const game = {
     powerups: [],
     roundDelay: 0,
     difficulty: 'veteran',
-    stats: { hits: 0, damage: 0, dashes: 0, powerups: 0, combo: 0, bestCombo: 0 }
+    stats: { hits: 0, damage: 0, dashes: 0, powerups: 0, specials: 0, combo: 0, bestCombo: 0 }
 };
 
 function updateUI() {
@@ -685,7 +736,7 @@ function startMatch() {
     game.powerups = [];
     game.particles = [];
     game.difficulty = ui.difficulty.value;
-    game.stats = { hits: 0, damage: 0, dashes: 0, powerups: 0, combo: 0, bestCombo: 0 };
+    game.stats = { hits: 0, damage: 0, dashes: 0, powerups: 0, specials: 0, combo: 0, bestCombo: 0 };
     startRound();
 }
 
@@ -745,7 +796,7 @@ function endMatch() {
     game.state = STATE.GAME_OVER;
     recordMatchResult();
     const stats = game.stats;
-    showMessage(`${winner} TAKES IT`, `${difficultyProfiles[game.difficulty].label} // ${stats.hits} hits // ${Math.round(stats.damage)} damage // BEST COMBO ${stats.bestCombo} // ${stats.dashes} dashes`, 'REMATCH', startMatch);
+    showMessage(`${winner} TAKES IT`, `${difficultyProfiles[game.difficulty].label} // ${stats.hits} hits // ${Math.round(stats.damage)} damage // SPECIALS ${stats.specials} // BEST COMBO ${stats.bestCombo} // ${stats.dashes} dashes`, 'REMATCH', startMatch);
     playEffect('win');
     loadLeaderboard();
 }
@@ -833,6 +884,12 @@ function handleAttackCollisions() {
         if (!attackBox || attacker.attackHit || defender.health <= 0) return;
 
         if (rectangleOverlap(attackBox, defender.hitbox) && !defender.isIntangible) {
+            const perfectGuard = defender.isBlocking && attacker.activeAttack && attacker.activeAttack.time > 0.06 && attacker.activeAttack.time < 0.18;
+            if (perfectGuard) {
+                defender.takeDamage(attacker.activeAttack.damage, attacker);
+                return;
+            }
+
             defender.takeDamage(attacker.activeAttack.damage, attacker);
             attacker.attackHit = true;
             createImpact(defender.position.x + defender.width / 2, defender.position.y + defender.height / 2, 18, '#ffbd6f');
@@ -920,8 +977,16 @@ function drawHUD() {
     const timeColor = game.roundTimer < 10 ? '#ff6f6f' : '#d7e5ff';
     ui.timer.style.color = timeColor;
     if (ui.combatStatus) {
-        ui.combatStatus.textContent = game.stats.combo > 1 ? `COMBO x${game.stats.combo}` : `${difficultyProfiles[game.difficulty].label} PROFILE`;
-        ui.combatStatus.classList.toggle('combo-live', game.stats.combo > 1);
+        if (player1.meter >= 100) {
+            ui.combatStatus.textContent = 'SPECIAL READY';
+            ui.combatStatus.classList.add('combo-live');
+        } else if (game.stats.combo > 1) {
+            ui.combatStatus.textContent = `COMBO x${game.stats.combo}`;
+            ui.combatStatus.classList.add('combo-live');
+        } else {
+            ui.combatStatus.textContent = `${difficultyProfiles[game.difficulty].label} PROFILE`;
+            ui.combatStatus.classList.remove('combo-live');
+        }
     }
 }
 
@@ -1012,6 +1077,9 @@ touchControls.querySelectorAll('button').forEach(button => {
             case 'attack':
                 player1.attack();
                 break;
+            case 'special':
+                player1.useSpecial();
+                break;
         }
     });
     button.addEventListener('pointerup', () => {
@@ -1088,6 +1156,9 @@ window.addEventListener('keydown', event => {
     }
     if (event.key === 'f' || event.key === 'F') {
         player1.attack();
+    }
+    if (event.key === 'r' || event.key === 'R') {
+        player1.useSpecial();
     }
     if (event.key === 'q' || event.key === 'Q') {
         player1.dash(-1);
