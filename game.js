@@ -803,14 +803,23 @@ const game = {
 
 function updateUI() {
     ui.timer.textContent = Math.max(0, Math.ceil(game.roundTimer));
-    ui.player1Health.style.width = `${player1.health}%`;
-    ui.player2Health.style.width = `${player2.health}%`;
+    ui.player1Health.style.width = `${(player1.health / player1.maxHealth) * 100}%`;
+    ui.player2Health.style.width = `${(player2.health / player2.maxHealth) * 100}%`;
     ui.player1Meter.style.width = `${player1.meter}%`;
     ui.player2Meter.style.width = `${player2.meter}%`;
     ui.player1Score.textContent = game.scores.p1;
     ui.player2Score.textContent = game.scores.p2;
     ui.roundLabel.textContent = `Round ${game.roundNumber} / ${MAX_ROUNDS}`;
     ui.pauseButton.textContent = game.state === STATE.PAUSED ? 'RESUME' : 'PAUSE';
+    if (game.director.active) {
+        ui.directorEvent.textContent = game.director.active.name;
+        ui.directorTimer.textContent = `${game.director.time.toFixed(1)} SEC REMAINING`;
+        ui.directorEvent.style.color = game.director.active.color;
+    } else {
+        ui.directorEvent.textContent = 'CALIBRATING';
+        ui.directorTimer.textContent = `NEXT EVENT ${Math.max(0, game.director.next).toFixed(1)}`;
+        ui.directorEvent.style.color = '#f4f7ff';
+    }
     updateProfileUI();
 }
 
