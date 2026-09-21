@@ -47,7 +47,10 @@ const ui = {
     pilotRank: document.getElementById('pilot-rank'),
     pilotXp: document.getElementById('pilot-xp'),
     contractName: document.getElementById('contract-name'),
-    contractProgress: document.getElementById('contract-progress')
+    contractProgress: document.getElementById('contract-progress'),
+    directorEvent: document.getElementById('director-event'),
+    directorTimer: document.getElementById('director-timer'),
+    eventFeed: document.getElementById('event-feed')
 };
 
 const overlay = document.getElementById('message-overlay');
@@ -86,6 +89,13 @@ const contracts = [
     { name: 'TRIGGER A SPECIAL', target: 1, getValue: stats => stats.specials },
     { name: 'BUILD A 5 HIT COMBO', target: 5, getValue: stats => stats.bestCombo },
     { name: 'DEAL 150 DAMAGE', target: 150, getValue: stats => Math.round(stats.damage) }
+];
+
+const directorEvents = [
+    { name: 'GRAVITY FLUX', duration: 7, color: '#72d9ff', intro: 'Gravity reduced. Air control amplified.' },
+    { name: 'MIRROR CURRENT', duration: 6, color: '#f08bff', intro: 'Directional inputs inverted for PLAYER 1.' },
+    { name: 'OVERDRIVE WINDOW', duration: 5, color: '#ffbd6f', intro: 'All attacks deal amplified damage.' },
+    { name: 'BLACKOUT PROTOCOL', duration: 6, color: '#a8b8d8', intro: 'Arena visibility reduced. Read the silhouettes.' }
 ];
 
 const profile = {
