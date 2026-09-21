@@ -522,6 +522,7 @@ class Player {
             const perfectBlockWindow = Math.abs(attacker.position.x - this.position.x) < 160;
             if (perfectBlockWindow) {
                 this.chargeMeter(35);
+                if (this === player1) game.stats.perfectGuards += 1;
                 this.state = 'PARRY';
                 this.stateTimer = 0.35;
                 this.isBlocking = false;
@@ -747,7 +748,8 @@ const game = {
     powerups: [],
     roundDelay: 0,
     difficulty: 'veteran',
-    stats: { hits: 0, damage: 0, dashes: 0, powerups: 0, specials: 0, combo: 0, bestCombo: 0 }
+    loadout: 'striker',
+    stats: { hits: 0, damage: 0, dashes: 0, powerups: 0, specials: 0, perfectGuards: 0, combo: 0, bestCombo: 0 }
 };
 
 function updateUI() {
@@ -760,6 +762,7 @@ function updateUI() {
     ui.player2Score.textContent = game.scores.p2;
     ui.roundLabel.textContent = `Round ${game.roundNumber} / ${MAX_ROUNDS}`;
     ui.pauseButton.textContent = game.state === STATE.PAUSED ? 'RESUME' : 'PAUSE';
+    updateProfileUI();
 }
 
 function showStartMenu() {
@@ -773,6 +776,7 @@ function showMessage(title, subtitle = '', actionText = '', actionHandler = null
     overlay.classList.remove('hidden');
     startMenu.classList.add('hidden');
     messagePanel.classList.remove('hidden');
+    debriefPanel.classList.add('hidden');
     statusMessage.textContent = title;
     subtitleMessage.textContent = subtitle;
 
@@ -784,6 +788,13 @@ function showMessage(title, subtitle = '', actionText = '', actionHandler = null
         overlayAction.classList.add('hidden');
         overlayAction.onclick = null;
     }
+}
+
+function applyLoadout() {
+    const loadout = loadoutProfiles[game.loadout];
+    player1.maxHealth = loadout.maxHealth;
+    player1.damageMultiplier = loadout.damageMultiplier;
+    player1.dashCooldownBase = loadout.dashCooldown;
 }
 
 function hideOverlay() {
@@ -802,7 +813,9 @@ function startMatch() {
     game.powerups = [];
     game.particles = [];
     game.difficulty = ui.difficulty.value;
-    game.stats = { hits: 0, damage: 0, dashes: 0, powerups: 0, specials: 0, combo: 0, bestCombo: 0 };
+    game.loadout = ui.loadout.value;
+    game.stats = { hits: 0, damage: 0, dashes: 0, powerups: 0, specials: 0, perfectGuards: 0, combo: 0, bestCombo: 0 };
+    applyLoadout();
     startRound();
 }
 
@@ -860,9 +873,22 @@ function endRound(winner) {
 function endMatch() {
     const winner = game.scores.p1 > game.scores.p2 ? 'PLAYER 1' : 'AI';
     game.state = STATE.GAME_OVER;
+    const contract = getContract();
+    const contractComplete = contract.getValue(game.stats) >= contract.target;
+    const matchScore = Math.round(game.stats.damage + game.stats.hits * 12 + game.stats.bestCombo * 18 + game.stats.perfectGuards * 25);
+    const xpEarned = 100 + game.scores.p1 * 75 + Math.round(matchScore / 20) + (contractComplete ? 150 : 0);
+    profile.matches += 1;
+    if (winner === 'PLAYER 1') profile.wins += 1;
+    profile.xp += xpEarned;
+    saveProfile();
     recordMatchResult();
     const stats = game.stats;
-    showMessage(`${winner} TAKES IT`, `${difficultyProfiles[game.difficulty].label} // ${stats.hits} hits // ${Math.round(stats.damage)} damage // SPECIALS ${stats.specials} // BEST COMBO ${stats.bestCombo} // ${stats.dashes} dashes`, 'REMATCH', startMatch);
+    showMessage(`${winner} TAKES IT`, `${difficultyProfiles[game.difficulty].label} // ${loadoutProfiles[game.loadout].label} LOADOUT`, 'REMATCH', startMatch);
+    debriefPanel.classList.remove('hidden');
+    debriefResult.textContent = winner === 'PLAYER 1' ? 'VICTORY' : 'DEFEAT';
+    debriefXp.textContent = `+${xpEarned} XP`;
+    debriefScore.textContent = `${matchScore} // ${stats.hits} HITS`;
+    debriefContract.textContent = contractComplete ? 'COMPLETE +150 XP' : `${contract.getValue(stats)} / ${contract.target}`;
     playEffect('win');
     loadLeaderboard();
 }
@@ -1185,6 +1211,14 @@ ui.difficulty.addEventListener('change', () => {
         localStorage.setItem('slipstream.profile', ui.difficulty.value);
     } catch {
         // The selected profile still works for this session.
+    }
+});
+
+ui.loadout.addEventListener('change', () => {
+    try {
+        localStorage.setItem('slipstream.loadout', ui.loadout.value);
+    } catch {
+        // The selected loadout still works for this session.
     }
 });
 
