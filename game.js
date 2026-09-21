@@ -41,8 +41,13 @@ const ui = {
     audioToggle: document.getElementById('audio-toggle'),
     playerName: document.getElementById('player-name'),
     difficulty: document.getElementById('difficulty-select'),
+    loadout: document.getElementById('loadout-select'),
     leaderboard: document.getElementById('leaderboard-list'),
-    combatStatus: document.getElementById('combat-status')
+    combatStatus: document.getElementById('combat-status'),
+    pilotRank: document.getElementById('pilot-rank'),
+    pilotXp: document.getElementById('pilot-xp'),
+    contractName: document.getElementById('contract-name'),
+    contractProgress: document.getElementById('contract-progress')
 };
 
 const overlay = document.getElementById('message-overlay');
@@ -51,6 +56,11 @@ const messagePanel = document.getElementById('message-panel');
 const statusMessage = document.getElementById('status-message');
 const subtitleMessage = document.getElementById('subtitle-message');
 const overlayAction = document.getElementById('overlay-action');
+const debriefPanel = document.getElementById('debrief-panel');
+const debriefResult = document.getElementById('debrief-result');
+const debriefXp = document.getElementById('debrief-xp');
+const debriefScore = document.getElementById('debrief-score');
+const debriefContract = document.getElementById('debrief-contract');
 
 const startButton = document.getElementById('start-button');
 const touchControls = document.getElementById('touch-controls');
@@ -64,11 +74,64 @@ const difficultyProfiles = {
     apex: { label: 'APEX', aggression: 1.35 }
 };
 
+const loadoutProfiles = {
+    vanguard: { label: 'VANGUARD', maxHealth: 118, damageMultiplier: 0.9, dashCooldown: 1.02 },
+    striker: { label: 'STRIKER', maxHealth: 100, damageMultiplier: 1.16, dashCooldown: 0.92 },
+    phase: { label: 'PHASE', maxHealth: 88, damageMultiplier: 0.98, dashCooldown: 0.66 }
+};
+
+const contracts = [
+    { name: 'LAND 8 HITS', target: 8, getValue: stats => stats.hits },
+    { name: 'COLLECT 2 POWERUPS', target: 2, getValue: stats => stats.powerups },
+    { name: 'TRIGGER A SPECIAL', target: 1, getValue: stats => stats.specials },
+    { name: 'BUILD A 5 HIT COMBO', target: 5, getValue: stats => stats.bestCombo },
+    { name: 'DEAL 150 DAMAGE', target: 150, getValue: stats => Math.round(stats.damage) }
+];
+
+const profile = {
+    xp: 0,
+    matches: 0,
+    wins: 0,
+    contractIndex: new Date().getDate() % contracts.length
+};
+
 try {
     ui.playerName.value = localStorage.getItem('slipstream.callsign') || ui.playerName.value;
     ui.difficulty.value = localStorage.getItem('slipstream.profile') || ui.difficulty.value;
+    ui.loadout.value = localStorage.getItem('slipstream.loadout') || ui.loadout.value;
+    const storedProfile = JSON.parse(localStorage.getItem('slipstream.pilot') || 'null');
+    if (storedProfile) {
+        profile.xp = Number(storedProfile.xp) || 0;
+        profile.matches = Number(storedProfile.matches) || 0;
+        profile.wins = Number(storedProfile.wins) || 0;
+    }
 } catch {
     // Private browsing may block local storage; the defaults remain usable.
+}
+
+function getPilotLevel() {
+    return Math.floor(profile.xp / 500) + 1;
+}
+
+function saveProfile() {
+    try {
+        localStorage.setItem('slipstream.pilot', JSON.stringify(profile));
+    } catch {
+        // Progress remains available until the page is closed.
+    }
+}
+
+function getContract() {
+    return contracts[profile.contractIndex];
+}
+
+function updateProfileUI() {
+    const contract = getContract();
+    const progress = Math.min(contract.getValue(game.stats), contract.target);
+    ui.pilotRank.textContent = `PILOT LEVEL ${getPilotLevel()}`;
+    ui.pilotXp.textContent = `${profile.xp} XP // ${profile.wins} WINS`;
+    ui.contractName.textContent = contract.name;
+    ui.contractProgress.textContent = `${progress} / ${contract.target}`;
 }
 
 function getPlayerName() {
@@ -290,6 +353,7 @@ class Player {
         this.velocity = { x: 0, y: 0 };
         this.facing = 1;
         this.health = 100;
+        this.maxHealth = 100;
         this.meter = 0;
         this.isBlocking = false;
         this.isIntangible = false;
@@ -306,6 +370,8 @@ class Player {
         this.airJumps = 1;
         this.effects = [];
         this.speedMultiplier = 1;
+        this.damageMultiplier = 1;
+        this.dashCooldownBase = 0.92;
     }
 
     get hitbox() {
@@ -338,7 +404,7 @@ class Player {
         this.velocity.x = 0;
         this.velocity.y = 0;
         this.facing = x < CANVAS_WIDTH / 2 ? 1 : -1;
-        this.health = 100;
+        this.health = this.maxHealth;
         this.meter = 0;
         this.isBlocking = false;
         this.isIntangible = false;
@@ -401,7 +467,7 @@ class Player {
             height: 22,
             offsetX: 42,
             offsetY: 74,
-            damage: 16,
+            damage: 16 * this.damageMultiplier,
             time: 0.16,
             hit: false,
             special: false
@@ -440,7 +506,7 @@ class Player {
         this.isDashing = true;
         this.isIntangible = true;
         this.dashTimer = 0.18;
-        this.dashCooldown = 0.92;
+        this.dashCooldown = this.dashCooldownBase;
         this.state = 'DASH';
         this.stateTimer = 0.18;
         this.velocity.x = direction * 24 * this.speedMultiplier;
