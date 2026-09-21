@@ -281,6 +281,42 @@ canvas {
     text-align: left;
 }
 
+.pilot-strip {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    color: #dbe6ff;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.pilot-strip span:last-child {
+    color: #f0c778;
+}
+
+.contract-card {
+    display: grid;
+    gap: 7px;
+    margin-top: 12px;
+    padding: 13px 14px;
+    border-left: 2px solid #72d9ff;
+    background: rgba(114, 217, 255, 0.07);
+    text-align: left;
+}
+
+.contract-card strong {
+    color: #f2f6ff;
+    font-size: 13px;
+}
+
+#contract-progress {
+    color: #a9badb;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+}
+
 .setup-grid input,
 .setup-grid select {
     width: 100%;
@@ -364,6 +400,33 @@ canvas {
     font-size: 16px;
 }
 
+.debrief-panel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 24px;
+    text-align: left;
+}
+
+.debrief-item {
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.debrief-item span {
+    color: #8fa7d4;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+}
+
+.debrief-item strong {
+    color: #f0c778;
+    font-size: 15px;
+}
+
 #overlay-action {
     margin-top: 26px;
 }
@@ -432,6 +495,10 @@ canvas {
     }
 
     .setup-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .debrief-panel {
         grid-template-columns: 1fr;
     }
 

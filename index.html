@@ -72,6 +72,23 @@
                             <option value="apex">APEX // OVERDRIVE</option>
                         </select>
                     </label>
+                    <label>
+                        <span>LOADOUT</span>
+                        <select id="loadout-select">
+                            <option value="vanguard">VANGUARD // ARMOR</option>
+                            <option value="striker" selected>STRIKER // DAMAGE</option>
+                            <option value="phase">PHASE // MOBILITY</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="pilot-strip">
+                    <span id="pilot-rank">PILOT LEVEL 1</span>
+                    <span id="pilot-xp">0 XP</span>
+                </div>
+                <div class="contract-card">
+                    <div class="section-kicker">ACTIVE CONTRACT</div>
+                    <strong id="contract-name">Loading contract...</strong>
+                    <span id="contract-progress">0 / 0</span>
                 </div>
                 <div class="button-row">
                     <button id="start-button" class="primary-button">START MATCH</button>
@@ -95,6 +112,12 @@
             <div id="message-panel" class="message-panel hidden">
                 <h1 id="status-message">READY?</h1>
                 <p id="subtitle-message"></p>
+                <div id="debrief-panel" class="debrief-panel hidden">
+                    <div class="debrief-item"><span>RESULT</span><strong id="debrief-result">-</strong></div>
+                    <div class="debrief-item"><span>XP EARNED</span><strong id="debrief-xp">+0</strong></div>
+                    <div class="debrief-item"><span>COMBAT SCORE</span><strong id="debrief-score">0</strong></div>
+                    <div class="debrief-item"><span>CONTRACT</span><strong id="debrief-contract">PENDING</strong></div>
+                </div>
                 <button id="overlay-action" class="primary-button hidden"></button>
             </div>
         </div>
