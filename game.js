@@ -495,6 +495,7 @@ class Player {
 
     startBlock() {
         if (this.health <= 0) return;
+        if (this === player1 && !this.isBlocking) game.adaptation.blocks += 1;
         this.isBlocking = true;
         this.state = 'BLOCK';
     }
@@ -537,7 +538,7 @@ class Player {
             height: 36,
             offsetX: 78,
             offsetY: 58,
-            damage: 34,
+            damage: 34 * this.damageMultiplier * game.director.damageScale,
             time: 0.24,
             hit: false,
             special: true
@@ -882,6 +883,9 @@ function startMatch() {
     game.difficulty = ui.difficulty.value;
     game.loadout = ui.loadout.value;
     game.stats = { hits: 0, damage: 0, dashes: 0, powerups: 0, specials: 0, perfectGuards: 0, combo: 0, bestCombo: 0 };
+    game.adaptation = { blocks: 0, dashes: 0, attacks: 0 };
+    game.director = { active: null, time: 0, next: 9, cycle: 0, gravityScale: 1, inputInverted: false, damageScale: 1, history: [] };
+    ui.eventFeed.innerHTML = '';
     applyLoadout();
     startRound();
 }
@@ -979,11 +983,12 @@ function createImpact(x, y, amount, color) {
 
 function applyPlayerInput() {
     if (game.state !== STATE.PLAYING) return;
+    const directionMultiplier = game.director.inputInverted ? -1 : 1;
     if (inputState.left) {
-        player1.move(-1);
+        player1.move(-1 * directionMultiplier);
     }
     if (inputState.right) {
-        player1.move(1);
+        player1.move(1 * directionMultiplier);
     }
     if (!inputState.left && !inputState.right && player1.grounded && !player1.isDashing) {
         player1.velocity.x *= 0.94;
@@ -1001,6 +1006,8 @@ function updateAI(delta) {
     const absDistance = Math.abs(distance);
     const direction = Math.sign(distance) || 1;
     const profile = difficultyProfiles[game.difficulty];
+    const playerIsDefensive = game.adaptation.blocks >= 3;
+    const playerIsDashHeavy = game.adaptation.dashes >= 3;
 
     if (player2.stunTimer > 0) {
         return;
@@ -1010,8 +1017,12 @@ function updateAI(delta) {
         player2.attack();
     }
 
-    if (player2.dashCooldown <= 0 && absDistance > 250 && Math.random() < 0.04 * profile.aggression) {
+    if (player2.dashCooldown <= 0 && absDistance > 250 && Math.random() < (playerIsDefensive ? 0.08 : 0.04) * profile.aggression) {
         player2.dash(direction);
+    }
+
+    if (playerIsDashHeavy && absDistance < 210 && player2.attackCooldown <= 0 && Math.random() < 0.09 * profile.aggression) {
+        player2.attack();
     }
 
     if (absDistance > 120) {
@@ -1123,6 +1134,14 @@ function drawBackground() {
     ctx.moveTo(24, FLOOR_Y + 6);
     ctx.lineTo(CANVAS_WIDTH - 24, FLOOR_Y + 6);
     ctx.stroke();
+
+    if (game.director.active && game.director.active.name === 'BLACKOUT PROTOCOL') {
+        const blackout = ctx.createRadialGradient(CANVAS_WIDTH / 2, FLOOR_Y - 90, 80, CANVAS_WIDTH / 2, FLOOR_Y - 90, 480);
+        blackout.addColorStop(0, 'rgba(2, 3, 10, 0.2)');
+        blackout.addColorStop(1, 'rgba(0, 0, 0, 0.86)');
+        ctx.fillStyle = blackout;
+        ctx.fillRect(0, 0, CANVAS_WIDTH, FLOOR_Y);
+    }
 }
 
 function drawEntities() {
@@ -1142,6 +1161,12 @@ function drawHUD() {
         } else if (game.stats.combo > 1) {
             ui.combatStatus.textContent = `COMBO x${game.stats.combo}`;
             ui.combatStatus.classList.add('combo-live');
+        } else if (game.adaptation.blocks >= 3) {
+            ui.combatStatus.textContent = 'RIVAL ADAPTING // PUNISH BLOCKS';
+            ui.combatStatus.classList.add('combo-live');
+        } else if (game.adaptation.dashes >= 3) {
+            ui.combatStatus.textContent = 'RIVAL ADAPTING // TRACKING DASHES';
+            ui.combatStatus.classList.add('combo-live');
         } else {
             ui.combatStatus.textContent = `${difficultyProfiles[game.difficulty].label} PROFILE`;
             ui.combatStatus.classList.remove('combo-live');
@@ -1158,6 +1183,7 @@ function animate(timestamp) {
 
     if (game.state === STATE.PLAYING) {
         applyPlayerInput();
+        updateDirector(delta);
         updateAI(delta);
         updateEntities(delta);
 
