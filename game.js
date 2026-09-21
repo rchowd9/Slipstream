@@ -508,13 +508,14 @@ class Player {
 
     attack() {
         if (this.health <= 0 || this.attackCooldown > 0 || this.activeAttack || this.stunTimer > 0) return;
+        if (this === player1) game.adaptation.attacks += 1;
         this.attackCooldown = 0.45;
         this.activeAttack = {
             width: 68,
             height: 22,
             offsetX: 42,
             offsetY: 74,
-            damage: 16 * this.damageMultiplier,
+            damage: 16 * this.damageMultiplier * game.director.damageScale,
             time: 0.16,
             hit: false,
             special: false
@@ -558,7 +559,10 @@ class Player {
         this.stateTimer = 0.18;
         this.velocity.x = direction * 24 * this.speedMultiplier;
         this.facing = direction;
-        if (this === player1) game.stats.dashes += 1;
+        if (this === player1) {
+            game.stats.dashes += 1;
+            game.adaptation.dashes += 1;
+        }
         playEffect('dash');
     }
 
@@ -569,7 +573,11 @@ class Player {
             const perfectBlockWindow = Math.abs(attacker.position.x - this.position.x) < 160;
             if (perfectBlockWindow) {
                 this.chargeMeter(35);
-                if (this === player1) game.stats.perfectGuards += 1;
+                if (this === player1) {
+                    game.stats.perfectGuards += 1;
+                    game.adaptation.blocks += 1;
+                    recordEvent('PERFECT GUARD // METER +35', '#97ebff');
+                }
                 this.state = 'PARRY';
                 this.stateTimer = 0.35;
                 this.isBlocking = false;
@@ -588,7 +596,7 @@ class Player {
         }
 
         this.health -= amount;
-        this.health = clamp(this.health, 0, 100);
+        this.health = clamp(this.health, 0, this.maxHealth);
         this.stunTimer = this.isBlocking ? 0.14 : 0.24;
         this.state = 'HIT';
         this.stateTimer = 0.22;
@@ -604,6 +612,7 @@ class Player {
                 game.stats.hits += 1;
                 game.stats.combo += 1;
                 game.stats.bestCombo = Math.max(game.stats.bestCombo, game.stats.combo);
+                recordEvent(`IMPACT // ${Math.round(amount)} DAMAGE`, '#ffbd6f');
             }
         }
         if (this === player1) game.stats.combo = 0;
@@ -691,7 +700,7 @@ class Player {
             this.velocity.x *= 0.88;
         }
 
-        this.velocity.y += GRAVITY;
+        this.velocity.y += GRAVITY * (this === player1 ? game.director.gravityScale : 1);
         this.position.x += this.velocity.x * delta * 60;
         this.position.y += this.velocity.y * delta * 60;
 
