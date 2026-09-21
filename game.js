@@ -144,6 +144,43 @@ function updateProfileUI() {
     ui.contractProgress.textContent = `${progress} / ${contract.target}`;
 }
 
+function recordEvent(message, color = '#72d9ff') {
+    game.director.history.unshift({ message, color });
+    game.director.history = game.director.history.slice(0, 3);
+    ui.eventFeed.innerHTML = game.director.history
+        .map(event => `<div style="border-color:${event.color}">${event.message}</div>`)
+        .join('');
+}
+
+function startDirectorEvent() {
+    const event = directorEvents[game.director.cycle % directorEvents.length];
+    game.director.cycle += 1;
+    game.director.active = event;
+    game.director.time = event.duration;
+    game.director.gravityScale = event.name === 'GRAVITY FLUX' ? 0.45 : 1;
+    game.director.inputInverted = event.name === 'MIRROR CURRENT';
+    game.director.damageScale = event.name === 'OVERDRIVE WINDOW' ? 1.45 : 1;
+    recordEvent(`DIRECTOR // ${event.name}`, event.color);
+    playEffect('powerup');
+}
+
+function updateDirector(delta) {
+    if (game.director.active) {
+        game.director.time -= delta;
+        if (game.director.time <= 0) {
+            recordEvent(`DIRECTOR // ${game.director.active.name} ENDED`, '#8fa7d4');
+            game.director.active = null;
+            game.director.gravityScale = 1;
+            game.director.inputInverted = false;
+            game.director.damageScale = 1;
+            game.director.next = 10 + Math.random() * 4;
+        }
+    } else {
+        game.director.next -= delta;
+        if (game.director.next <= 0) startDirectorEvent();
+    }
+}
+
 function getPlayerName() {
     return (ui.playerName.value.trim() || 'PLAYER 1').slice(0, 24);
 }
@@ -759,7 +796,9 @@ const game = {
     roundDelay: 0,
     difficulty: 'veteran',
     loadout: 'striker',
-    stats: { hits: 0, damage: 0, dashes: 0, powerups: 0, specials: 0, perfectGuards: 0, combo: 0, bestCombo: 0 }
+    stats: { hits: 0, damage: 0, dashes: 0, powerups: 0, specials: 0, perfectGuards: 0, combo: 0, bestCombo: 0 },
+    director: { active: null, time: 0, next: 9, cycle: 0, gravityScale: 1, inputInverted: false, damageScale: 1 },
+    adaptation: { blocks: 0, dashes: 0, attacks: 0 }
 };
 
 function updateUI() {
