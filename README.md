@@ -8,6 +8,9 @@ Slipstream is a 1v1 dash-fighter with a persistent pilot progression layer. Win 
 - A local pilot profile tracks level, XP, total matches, and wins across sessions.
 - Daily contracts turn combat telemetry into objectives such as hit counts, powerup collection, specials, combos, and damage dealt.
 - Match debriefs calculate a combat score, award XP, and report contract completion before the next rematch.
+- The Arena Director periodically mutates the rules with Gravity Flux, Mirror Current, Overdrive Window, and Blackout Protocol events.
+- Rival Adaptation watches repeated blocks and dashes, then changes the AI's spacing and punish behavior during the same match.
+- The Flight Recorder keeps a live three-entry combat log for impacts, perfect guards, and director interventions.
 - The canvas loop, input layer, AI profiles, particles, audio feedback, touch controls, and cloud leaderboard remain available in every match.
 
 ## Stack
