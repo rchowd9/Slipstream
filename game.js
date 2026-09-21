@@ -623,7 +623,7 @@ class Player {
     }
 
     heal(amount) {
-        this.health = clamp(this.health + amount, 0, 100);
+        this.health = clamp(this.health + amount, 0, this.maxHealth);
     }
 
     chargeMeter(amount) {
