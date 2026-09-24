@@ -2,7 +2,15 @@ using Azure;
 using Azure.Data.Tables;
 using Microsoft.Extensions.Configuration;
 
-public sealed record MatchResult(string Player, int PlayerScore, int OpponentScore);
+public sealed record MatchResult(
+    string Player,
+    int PlayerScore,
+    int OpponentScore,
+    int Hits = 0,
+    int Damage = 0,
+    int Dashes = 0,
+    int Specials = 0,
+    int BestCombo = 0);
 
 public sealed record LeaderboardEntry(string Player, int Wins, int Losses, DateTimeOffset PlayedAt);
 

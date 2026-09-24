@@ -43,6 +43,9 @@ const ui = {
     difficulty: document.getElementById('difficulty-select'),
     loadout: document.getElementById('loadout-select'),
     leaderboard: document.getElementById('leaderboard-list'),
+    cloudChallenge: document.getElementById('cloud-challenge'),
+    challengeName: document.getElementById('challenge-name'),
+    challengeDescription: document.getElementById('challenge-description'),
     combatStatus: document.getElementById('combat-status'),
     pilotRank: document.getElementById('pilot-rank'),
     pilotXp: document.getElementById('pilot-xp'),
@@ -209,6 +212,19 @@ async function checkCloudApi() {
     }
 }
 
+async function loadDailyChallenge() {
+    try {
+        const response = await fetch('/api/challenge');
+        if (!response.ok) throw new Error('Challenge unavailable');
+        const challenge = await response.json();
+        ui.challengeName.textContent = `${challenge.name} // ${challenge.target} ${challenge.metric.toUpperCase()}`;
+        ui.challengeDescription.textContent = challenge.description;
+        ui.cloudChallenge.hidden = false;
+    } catch {
+        ui.cloudChallenge.hidden = true;
+    }
+}
+
 async function recordMatchResult() {
     try {
         await fetch('/api/matches', {
@@ -217,7 +233,12 @@ async function recordMatchResult() {
             body: JSON.stringify({
                 player: getPlayerName(),
                 playerScore: game.scores.p1,
-                opponentScore: game.scores.p2
+                opponentScore: game.scores.p2,
+                hits: game.stats.hits,
+                damage: Math.round(game.stats.damage),
+                dashes: game.stats.dashes,
+                specials: game.stats.specials,
+                bestCombo: game.stats.bestCombo
             })
         });
     } catch {
@@ -1383,6 +1404,7 @@ window.addEventListener('blur', () => {
 showStartMenu();
 checkCloudApi();
 loadLeaderboard();
+loadDailyChallenge();
 requestAnimationFrame(timestamp => {
     lastFrame = timestamp;
     animate(timestamp);
