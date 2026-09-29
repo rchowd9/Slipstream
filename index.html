@@ -67,53 +67,80 @@
                 <h1>Slipstream</h1>
                 <p class="menu-description">Neon arena combat with dash, attack, and powerups. Win best-of-3 rounds against a reactive AI opponent.</p>
                 <p id="cloud-status" class="cloud-status">CLOUD SCORES: CHECKING</p>
-                <div class="setup-grid">
-                    <label>
-                        <span>CALLSIGN</span>
-                        <input id="player-name" type="text" maxlength="24" value="PLAYER 1" autocomplete="nickname">
-                    </label>
-                    <label>
-                        <span>RIVAL PROFILE</span>
-                        <select id="difficulty-select">
-                            <option value="rookie">ROOKIE // WARM-UP</option>
-                            <option value="veteran" selected>VETERAN // STANDARD</option>
-                            <option value="apex">APEX // OVERDRIVE</option>
-                        </select>
-                    </label>
-                    <label>
-                        <span>LOADOUT</span>
-                        <select id="loadout-select">
-                            <option value="vanguard">VANGUARD // ARMOR</option>
-                            <option value="striker" selected>STRIKER // DAMAGE</option>
-                            <option value="phase">PHASE // MOBILITY</option>
-                        </select>
-                    </label>
+                <div id="cloud-challenge" class="cloud-challenge" hidden>
+                    <span class="section-kicker">DAILY CHALLENGE</span>
+                    <strong id="challenge-name">CALIBRATING</strong>
+                    <span id="challenge-description"></span>
                 </div>
-                <div class="pilot-strip">
-                    <span id="pilot-rank">PILOT LEVEL 1</span>
-                    <span id="pilot-xp">0 XP</span>
-                </div>
-                <div class="contract-card">
-                    <div class="section-kicker">ACTIVE CONTRACT</div>
-                    <strong id="contract-name">Loading contract...</strong>
-                    <span id="contract-progress">0 / 0</span>
-                </div>
-                <div class="button-row">
-                    <button id="start-button" class="primary-button">START MATCH</button>
-                    <button id="audio-toggle" class="secondary-button">AUDIO ON</button>
-                </div>
-                <div class="leaderboard-block">
-                    <div class="section-kicker">TOP PILOTS</div>
-                    <div id="leaderboard-list" class="leaderboard-list"><span>Loading cloud scores...</span></div>
-                </div>
-                <div class="controls-grid">
-                    <div><strong>Move:</strong> A / D</div>
-                    <div><strong>Jump:</strong> W</div>
-                    <div><strong>Block:</strong> S</div>
-                    <div><strong>Dash:</strong> Q / E</div>
-                    <div><strong>Attack:</strong> F</div>
-                    <div><strong>Special:</strong> R</div>
-                    <div><strong>Perfect Guard:</strong> Block frames</div>
+                <div class="menu-layout">
+                    <section class="menu-config" aria-label="Match settings">
+                        <div class="setup-grid">
+                            <label>
+                                <span>CALLSIGN</span>
+                                <input id="player-name" type="text" maxlength="24" value="PLAYER 1" autocomplete="nickname">
+                            </label>
+                            <label>
+                                <span>RIVAL PROFILE</span>
+                                <select id="difficulty-select">
+                                    <option value="rookie">ROOKIE // WARM-UP</option>
+                                    <option value="veteran" selected>VETERAN // STANDARD</option>
+                                    <option value="apex">APEX // OVERDRIVE</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>LOADOUT</span>
+                                <select id="loadout-select">
+                                    <option value="vanguard">VANGUARD // ARMOR</option>
+                                    <option value="striker" selected>STRIKER // DAMAGE</option>
+                                    <option value="phase">PHASE // MOBILITY</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>ARENA PALETTE</span>
+                                <select id="arena-palette">
+                                    <option value="neon">NEON // BLUE</option>
+                                    <option value="ember">EMBER // RED</option>
+                                    <option value="arctic">ARCTIC // TEAL</option>
+                                </select>
+                            </label>
+                        </div>
+                        <label class="setting-toggle">
+                            <input id="reduced-effects" type="checkbox">
+                            <span class="toggle-track" aria-hidden="true"></span>
+                            <span>REDUCED PARTICLES</span>
+                        </label>
+                    </section>
+                    <section class="menu-progress" aria-label="Pilot progress">
+                        <div class="pilot-strip">
+                            <span id="pilot-rank">PILOT LEVEL 1</span>
+                            <span id="pilot-xp">0 XP</span>
+                        </div>
+                        <div class="contract-card">
+                            <div class="section-kicker">ACTIVE CONTRACT</div>
+                            <strong id="contract-name">Loading contract...</strong>
+                            <span id="contract-progress">0 / 0</span>
+                        </div>
+                        <div class="button-row">
+                            <button id="start-button" class="primary-button">START MATCH</button>
+                            <button id="audio-toggle" class="secondary-button">AUDIO ON</button>
+                        </div>
+                        <div class="leaderboard-block">
+                            <div class="section-kicker">TOP PILOTS</div>
+                            <div id="leaderboard-list" class="leaderboard-list"><span>Loading cloud scores...</span></div>
+                        </div>
+                        <details class="controls-details">
+                            <summary>CONTROL SCHEME</summary>
+                            <div class="controls-grid">
+                                <div><strong>Move:</strong> A / D</div>
+                                <div><strong>Jump:</strong> W</div>
+                                <div><strong>Block:</strong> S</div>
+                                <div><strong>Dash:</strong> Q / E</div>
+                                <div><strong>Attack:</strong> F</div>
+                                <div><strong>Special:</strong> R</div>
+                                <div><strong>Perfect Guard:</strong> Block frames</div>
+                            </div>
+                        </details>
+                    </section>
                 </div>
             </div>
 
