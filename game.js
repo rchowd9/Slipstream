@@ -42,6 +42,8 @@ const ui = {
     playerName: document.getElementById('player-name'),
     difficulty: document.getElementById('difficulty-select'),
     loadout: document.getElementById('loadout-select'),
+    arenaPalette: document.getElementById('arena-palette'),
+    reducedEffects: document.getElementById('reduced-effects'),
     leaderboard: document.getElementById('leaderboard-list'),
     cloudChallenge: document.getElementById('cloud-challenge'),
     challengeName: document.getElementById('challenge-name'),
@@ -73,7 +75,35 @@ const touchControls = document.getElementById('touch-controls');
 const cloudStatus = document.getElementById('cloud-status');
 
 let audioEnabled = true;
+let reducedEffects = false;
+let arenaPalette = 'neon';
 let lastFrame = 0;
+const arenaPalettes = {
+    neon: {
+        top: '#06101f',
+        middle: '#040612',
+        bottom: '#020307',
+        grid: 'rgba(96, 130, 255, 0.08)',
+        floor: '#060a16',
+        beam: 'rgba(81, 107, 255, 0.16)'
+    },
+    ember: {
+        top: '#21120f',
+        middle: '#10090d',
+        bottom: '#050308',
+        grid: 'rgba(255, 120, 66, 0.09)',
+        floor: '#10090d',
+        beam: 'rgba(255, 111, 57, 0.18)'
+    },
+    arctic: {
+        top: '#0d1b22',
+        middle: '#071116',
+        bottom: '#02070a',
+        grid: 'rgba(93, 230, 211, 0.09)',
+        floor: '#061215',
+        beam: 'rgba(72, 223, 210, 0.15)'
+    }
+};
 const difficultyProfiles = {
     rookie: { label: 'ROOKIE', aggression: 0.65 },
     veteran: { label: 'VETERAN', aggression: 1 },
@@ -112,6 +142,9 @@ try {
     ui.playerName.value = localStorage.getItem('slipstream.callsign') || ui.playerName.value;
     ui.difficulty.value = localStorage.getItem('slipstream.profile') || ui.difficulty.value;
     ui.loadout.value = localStorage.getItem('slipstream.loadout') || ui.loadout.value;
+    arenaPalette = localStorage.getItem('slipstream.arenaPalette') || arenaPalette;
+    reducedEffects = localStorage.getItem('slipstream.reducedEffects') === 'true';
+    audioEnabled = localStorage.getItem('slipstream.audio') !== 'false';
     const storedProfile = JSON.parse(localStorage.getItem('slipstream.pilot') || 'null');
     if (storedProfile) {
         profile.xp = Number(storedProfile.xp) || 0;
@@ -121,6 +154,12 @@ try {
 } catch {
     // Private browsing may block local storage; the defaults remain usable.
 }
+
+ui.arenaPalette.value = arenaPalettes[arenaPalette] ? arenaPalette : 'neon';
+arenaPalette = ui.arenaPalette.value;
+ui.reducedEffects.checked = reducedEffects;
+ui.audioToggle.textContent = audioEnabled ? 'AUDIO ON' : 'AUDIO OFF';
+document.documentElement.dataset.arenaTheme = arenaPalette;
 
 function getPilotLevel() {
     return Math.floor(profile.xp / 500) + 1;
@@ -993,6 +1032,7 @@ function spawnPowerup() {
 }
 
 function createImpact(x, y, amount, color) {
+    if (reducedEffects) amount = Math.ceil(amount * 0.25);
     for (let i = 0; i < amount; i += 1) {
         const angle = Math.random() * Math.PI * 2;
         const speed = Math.random() * 2 + 1;
@@ -1114,15 +1154,16 @@ function updateEntities(delta) {
 }
 
 function drawBackground() {
+    const palette = arenaPalettes[arenaPalette];
     const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-    gradient.addColorStop(0, '#06101f');
-    gradient.addColorStop(0.45, '#040612');
-    gradient.addColorStop(1, '#020307');
+    gradient.addColorStop(0, palette.top);
+    gradient.addColorStop(0.45, palette.middle);
+    gradient.addColorStop(1, palette.bottom);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     ctx.save();
-    ctx.strokeStyle = 'rgba(96, 130, 255, 0.08)';
+    ctx.strokeStyle = palette.grid;
     ctx.lineWidth = 1;
     for (let x = 0; x <= CANVAS_WIDTH; x += 80) {
         ctx.beginPath();
@@ -1138,12 +1179,12 @@ function drawBackground() {
     }
     ctx.restore();
 
-    ctx.fillStyle = '#060a16';
+    ctx.fillStyle = palette.floor;
     ctx.fillRect(0, FLOOR_Y, CANVAS_WIDTH, CANVAS_HEIGHT - FLOOR_Y);
 
     ctx.save();
     const beam = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + 150);
-    beam.addColorStop(0, 'rgba(81, 107, 255, 0.16)');
+    beam.addColorStop(0, palette.beam);
     beam.addColorStop(1, 'rgba(2, 6, 16, 0.05)');
     ctx.fillStyle = beam;
     ctx.fillRect(0, FLOOR_Y, CANVAS_WIDTH, 150);
@@ -1309,6 +1350,30 @@ ui.pauseButton.addEventListener('click', () => {
 ui.audioToggle.addEventListener('click', () => {
     audioEnabled = !audioEnabled;
     ui.audioToggle.textContent = audioEnabled ? 'AUDIO ON' : 'AUDIO OFF';
+    try {
+        localStorage.setItem('slipstream.audio', String(audioEnabled));
+    } catch {
+        // The setting remains active for this session.
+    }
+});
+
+ui.arenaPalette.addEventListener('change', () => {
+    arenaPalette = ui.arenaPalette.value;
+    document.documentElement.dataset.arenaTheme = arenaPalette;
+    try {
+        localStorage.setItem('slipstream.arenaPalette', arenaPalette);
+    } catch {
+        // The selected palette remains active for this session.
+    }
+});
+
+ui.reducedEffects.addEventListener('change', () => {
+    reducedEffects = ui.reducedEffects.checked;
+    try {
+        localStorage.setItem('slipstream.reducedEffects', String(reducedEffects));
+    } catch {
+        // The setting remains active for this session.
+    }
 });
 
 ui.playerName.addEventListener('input', () => {
