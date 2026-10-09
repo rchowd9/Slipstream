@@ -42,6 +42,7 @@ const ui = {
     playerName: document.getElementById('player-name'),
     difficulty: document.getElementById('difficulty-select'),
     loadout: document.getElementById('loadout-select'),
+    mode: document.getElementById('mode-select'),
     arenaPalette: document.getElementById('arena-palette'),
     reducedEffects: document.getElementById('reduced-effects'),
     leaderboard: document.getElementById('leaderboard-list'),
@@ -53,6 +54,12 @@ const ui = {
     pilotXp: document.getElementById('pilot-xp'),
     contractName: document.getElementById('contract-name'),
     contractProgress: document.getElementById('contract-progress'),
+    summaryWins: document.getElementById('summary-wins'),
+    summaryStreak: document.getElementById('summary-streak'),
+    summaryRate: document.getElementById('summary-rate'),
+    summaryRank: document.getElementById('summary-rank'),
+    achievementGrid: document.getElementById('achievement-grid'),
+    battleLog: document.getElementById('battle-log'),
     directorEvent: document.getElementById('director-event'),
     directorTimer: document.getElementById('director-timer'),
     eventFeed: document.getElementById('event-feed')
@@ -124,6 +131,13 @@ const contracts = [
     { name: 'DEAL 150 DAMAGE', target: 150, getValue: stats => Math.round(stats.damage) }
 ];
 
+const achievementCatalog = [
+    { id: 'first-blood', label: 'FIRST BLOOD', detail: 'Win your first match', test: profile => profile.wins >= 1 },
+    { id: 'praxis', label: 'PRACTICE WINS', detail: 'Win 3 matches', test: profile => profile.wins >= 3 },
+    { id: 'arcade', label: 'CHAMPION PATH', detail: 'Reach 1500 XP', test: profile => profile.xp >= 1500 },
+    { id: 'ten-battles', label: 'COMBAT LOG', detail: 'Complete 10 matches', test: profile => profile.matches >= 10 }
+];
+
 const directorEvents = [
     { name: 'GRAVITY FLUX', duration: 7, color: '#72d9ff', intro: 'Gravity reduced. Air control amplified.' },
     { name: 'MIRROR CURRENT', duration: 6, color: '#f08bff', intro: 'Directional inputs inverted for PLAYER 1.' },
@@ -135,13 +149,18 @@ const profile = {
     xp: 0,
     matches: 0,
     wins: 0,
-    contractIndex: new Date().getDate() % contracts.length
+    currentStreak: 0,
+    bestStreak: 0,
+    contractIndex: new Date().getDate() % contracts.length,
+    history: [],
+    achievements: {}
 };
 
 try {
     ui.playerName.value = localStorage.getItem('slipstream.callsign') || ui.playerName.value;
     ui.difficulty.value = localStorage.getItem('slipstream.profile') || ui.difficulty.value;
     ui.loadout.value = localStorage.getItem('slipstream.loadout') || ui.loadout.value;
+    ui.mode.value = localStorage.getItem('slipstream.mode') || ui.mode.value;
     arenaPalette = localStorage.getItem('slipstream.arenaPalette') || arenaPalette;
     reducedEffects = localStorage.getItem('slipstream.reducedEffects') === 'true';
     audioEnabled = localStorage.getItem('slipstream.audio') !== 'false';
@@ -150,6 +169,11 @@ try {
         profile.xp = Number(storedProfile.xp) || 0;
         profile.matches = Number(storedProfile.matches) || 0;
         profile.wins = Number(storedProfile.wins) || 0;
+        profile.currentStreak = Number(storedProfile.currentStreak) || 0;
+        profile.bestStreak = Number(storedProfile.bestStreak) || 0;
+        profile.contractIndex = Number(storedProfile.contractIndex) || profile.contractIndex;
+        profile.history = Array.isArray(storedProfile.history) ? storedProfile.history.slice(0, 5) : [];
+        profile.achievements = storedProfile.achievements || {};
     }
 } catch {
     // Private browsing may block local storage; the defaults remain usable.
@@ -173,6 +197,56 @@ function saveProfile() {
     }
 }
 
+function getWinRate() {
+    return profile.matches ? Math.round((profile.wins / profile.matches) * 100) : 0;
+}
+
+function getRankLabel() {
+    if (profile.wins >= 8) return 'ACE';
+    if (profile.wins >= 5) return 'RIVAL';
+    if (profile.wins >= 2) return 'ROVER';
+    if (profile.matches > 0) return 'TRIAL';
+    return 'UNRANKED';
+}
+
+function updateAchievementState() {
+    achievementCatalog.forEach(item => {
+        profile.achievements[item.id] = !!item.test(profile) || !!profile.achievements[item.id];
+    });
+}
+
+function renderBattleLog() {
+    const entries = profile.history.length ? profile.history : [{ label: 'NO DATA YET', result: 'READY', score: '--', xp: '+0' }];
+    ui.battleLog.innerHTML = entries.map(item => `
+        <div class="battle-log-item">
+            <div><strong>${item.result}</strong><br>${item.label}</div>
+            <div class="battle-score">${item.score}<br>+${item.xp} XP</div>
+        </div>
+    `).join('');
+}
+
+function renderAchievements() {
+    updateAchievementState();
+    ui.achievementGrid.innerHTML = achievementCatalog.map(item => `
+        <div class="achievement-badge ${profile.achievements[item.id] ? 'unlocked' : ''}">
+            <div>
+                <strong>${item.label}</strong>
+                <small>${item.detail}</small>
+            </div>
+            <span class="achievement-marker" aria-label="${profile.achievements[item.id] ? 'Achieved' : 'Locked'}"></span>
+        </div>
+    `).join('');
+}
+
+function renderCareerSummary() {
+    ui.summaryWins.textContent = String(profile.wins);
+    ui.summaryStreak.textContent = String(profile.currentStreak);
+    ui.summaryRate.textContent = `${getWinRate()}%`;
+    ui.summaryRank.textContent = getRankLabel();
+    renderBattleLog();
+    renderAchievements();
+}
+
 function getContract() {
     return contracts[profile.contractIndex];
 }
@@ -184,6 +258,7 @@ function updateProfileUI() {
     ui.pilotXp.textContent = `${profile.xp} XP // ${profile.wins} WINS`;
     ui.contractName.textContent = contract.name;
     ui.contractProgress.textContent = `${progress} / ${contract.target}`;
+    renderCareerSummary();
 }
 
 function recordEvent(message, color = '#72d9ff') {
@@ -856,6 +931,7 @@ const player2 = new Player({ name: 'AI', color: '#ff5f71', accent: '#ff9aa8', x:
 
 const game = {
     state: STATE.TITLE,
+    mode: 'standard',
     roundTimer: ROUND_DURATION,
     countdown: 3.6,
     roundNumber: 1,
@@ -936,6 +1012,7 @@ function resetPlayers() {
 
 function startMatch() {
     resumeAudio();
+    game.mode = ui.mode.value;
     game.scores = { p1: 0, p2: 0 };
     game.roundNumber = 1;
     game.powerups = [];
@@ -1008,18 +1085,30 @@ function endMatch() {
     const contractComplete = contract.getValue(game.stats) >= contract.target;
     const matchScore = Math.round(game.stats.damage + game.stats.hits * 12 + game.stats.bestCombo * 18 + game.stats.perfectGuards * 25);
     const xpEarned = 100 + game.scores.p1 * 75 + Math.round(matchScore / 20) + (contractComplete ? 150 : 0);
+    const didWin = winner === 'PLAYER 1';
     profile.matches += 1;
-    if (winner === 'PLAYER 1') profile.wins += 1;
+    profile.currentStreak = didWin ? profile.currentStreak + 1 : 0;
+    profile.bestStreak = Math.max(profile.bestStreak, profile.currentStreak);
+    if (didWin) profile.wins += 1;
     profile.xp += xpEarned;
+    profile.history.unshift({
+        label: `${getRankLabel()} // ${difficultyProfiles[game.difficulty].label}`,
+        result: didWin ? 'VICTORY' : 'DEFEAT',
+        score: `${game.scores.p1}-${game.scores.p2}`,
+        xp: xpEarned
+    });
+    profile.history = profile.history.slice(0, 5);
+    updateAchievementState();
     saveProfile();
     recordMatchResult();
     const stats = game.stats;
     showMessage(`${winner} TAKES IT`, `${difficultyProfiles[game.difficulty].label} // ${loadoutProfiles[game.loadout].label} LOADOUT`, 'REMATCH', startMatch);
     debriefPanel.classList.remove('hidden');
-    debriefResult.textContent = winner === 'PLAYER 1' ? 'VICTORY' : 'DEFEAT';
+    debriefResult.textContent = didWin ? 'VICTORY' : 'DEFEAT';
     debriefXp.textContent = `+${xpEarned} XP`;
     debriefScore.textContent = `${matchScore} // ${stats.hits} HITS`;
     debriefContract.textContent = contractComplete ? 'COMPLETE +150 XP' : `${contract.getValue(stats)} / ${contract.target}`;
+    renderCareerSummary();
     playEffect('win');
     loadLeaderboard();
 }
@@ -1069,36 +1158,53 @@ function updateAI(delta) {
     const profile = difficultyProfiles[game.difficulty];
     const playerIsDefensive = game.adaptation.blocks >= 3;
     const playerIsDashHeavy = game.adaptation.dashes >= 3;
+    const aggressionBoost = game.mode === 'arcade' ? 1.25 : 1;
+
+    if (game.mode === 'training') {
+        if (absDistance > 170) {
+            player2.move(direction * 0.6);
+        } else {
+            player2.velocity.x *= 0.94;
+        }
+        if (player2.grounded && absDistance < 120 && Math.random() < 0.02) {
+            player2.jump();
+        }
+        player2.isBlocking = absDistance < 150 && Math.random() < 0.35;
+        if (player2.isBlocking) {
+            player2.state = 'BLOCK';
+        }
+        return;
+    }
 
     if (player2.stunTimer > 0) {
         return;
     }
 
-    if (player2.activeAttack === null && player2.attackCooldown <= 0 && absDistance < 170 && Math.random() < 0.14 * profile.aggression) {
+    if (player2.activeAttack === null && player2.attackCooldown <= 0 && absDistance < 170 && Math.random() < 0.14 * profile.aggression * aggressionBoost) {
         player2.attack();
     }
 
-    if (player2.dashCooldown <= 0 && absDistance > 250 && Math.random() < (playerIsDefensive ? 0.08 : 0.04) * profile.aggression) {
+    if (player2.dashCooldown <= 0 && absDistance > 250 && Math.random() < (playerIsDefensive ? 0.08 : 0.04) * profile.aggression * aggressionBoost) {
         player2.dash(direction);
     }
 
-    if (playerIsDashHeavy && absDistance < 210 && player2.attackCooldown <= 0 && Math.random() < 0.09 * profile.aggression) {
+    if (playerIsDashHeavy && absDistance < 210 && player2.attackCooldown <= 0 && Math.random() < 0.09 * profile.aggression * aggressionBoost) {
         player2.attack();
     }
 
     if (absDistance > 120) {
-        if (Math.random() < 0.72 * profile.aggression) {
+        if (Math.random() < 0.72 * profile.aggression * aggressionBoost) {
             player2.move(direction);
         }
     } else {
         player2.velocity.x *= 0.92;
     }
 
-    if (player2.grounded && absDistance < 130 && Math.random() < 0.035 * profile.aggression) {
+    if (player2.grounded && absDistance < 130 && Math.random() < 0.035 * profile.aggression * aggressionBoost) {
         player2.jump();
     }
 
-    if (player2.health < 36 && Math.random() < 0.012 * profile.aggression) {
+    if (player2.health < 36 && Math.random() < 0.012 * profile.aggression * aggressionBoost) {
         player2.startBlock();
     }
     if (player2.isBlocking && Math.random() < 0.06) {
@@ -1398,6 +1504,14 @@ ui.loadout.addEventListener('change', () => {
         localStorage.setItem('slipstream.loadout', ui.loadout.value);
     } catch {
         // The selected loadout still works for this session.
+    }
+});
+
+ui.mode.addEventListener('change', () => {
+    try {
+        localStorage.setItem('slipstream.mode', ui.mode.value);
+    } catch {
+        // The selected mode still works for this session.
     }
 });
 

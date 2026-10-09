@@ -96,6 +96,14 @@
                                 </select>
                             </label>
                             <label>
+                                <span>MODE</span>
+                                <select id="mode-select">
+                                    <option value="standard" selected>STANDARD // LIVE</option>
+                                    <option value="training">TRAINING // DUMMY</option>
+                                    <option value="arcade">ARCADE // FASTER</option>
+                                </select>
+                            </label>
+                            <label>
                                 <span>ARENA PALETTE</span>
                                 <select id="arena-palette">
                                     <option value="neon">NEON // BLUE</option>
@@ -119,6 +127,25 @@
                             <div class="section-kicker">ACTIVE CONTRACT</div>
                             <strong id="contract-name">Loading contract...</strong>
                             <span id="contract-progress">0 / 0</span>
+                        </div>
+                        <div class="utility-stack">
+                            <div class="career-panel">
+                                <div class="section-kicker">CAREER SUMMARY</div>
+                                <div class="career-stats">
+                                    <div><span>WINS</span><strong id="summary-wins">0</strong></div>
+                                    <div><span>STREAK</span><strong id="summary-streak">0</strong></div>
+                                    <div><span>RATE</span><strong id="summary-rate">0%</strong></div>
+                                    <div><span>RANK</span><strong id="summary-rank">UNRANKED</strong></div>
+                                </div>
+                            </div>
+                            <div class="achievement-panel">
+                                <div class="section-kicker">ACHIEVEMENTS</div>
+                                <div id="achievement-grid" class="achievement-grid"></div>
+                            </div>
+                            <div class="battle-log-panel">
+                                <div class="section-kicker">BATTLE LOG</div>
+                                <div id="battle-log" class="battle-log"></div>
+                            </div>
                         </div>
                         <div class="button-row">
                             <button id="start-button" class="primary-button">START MATCH</button>
