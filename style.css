@@ -30,7 +30,7 @@ body {
 
 #game-container {
     position: relative;
-    width: min(1024px, 98vw, 170svh);
+    width: min(1024px, calc(100vw - 24px), 170svh);
     aspect-ratio: 16 / 9;
     box-sizing: border-box;
     max-height: calc(100svh - 24px);
@@ -51,16 +51,16 @@ canvas {
 #ui-layer {
     position: absolute;
     inset: 0 0 auto 0;
+    box-sizing: border-box;
     padding: 16px 22px 0;
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(190px, 0.8fr) minmax(0, 1fr);
     gap: 16px;
     pointer-events: none;
 }
 
 .player-panel {
-    width: 28%;
-    min-width: 220px;
+    min-width: 0;
     padding: 18px 16px;
     background: rgba(10, 16, 38, 0.72);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -130,8 +130,6 @@ canvas {
 }
 
 .score-panel {
-    width: 30%;
-    min-width: 220px;
     padding: 18px 16px;
     display: grid;
     gap: 16px;
@@ -183,15 +181,18 @@ canvas {
 }
 
 .director-panel {
-    position: absolute;
-    top: 170px;
-    left: 50%;
+    position: relative;
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: center;
+    width: min(220px, calc(100vw - 32px));
+    min-width: 0;
+    margin-top: 8px;
     z-index: 2;
     display: grid;
     gap: 5px;
     min-width: 190px;
     padding: 11px 14px;
-    transform: translateX(-50%);
     background: rgba(11, 17, 37, 0.78);
     border: 1px solid rgba(255, 203, 108, 0.32);
     border-radius: 10px;
@@ -818,15 +819,18 @@ canvas {
 
 @media (max-width: 920px) {
     #ui-layer {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 16px;
+        grid-template-columns: minmax(0, 1fr) minmax(180px, 0.8fr) minmax(0, 1fr);
+        gap: 10px;
+        padding: 12px;
     }
 
     .player-panel,
     .score-panel {
-        width: auto;
-        min-width: 0;
+        padding: 14px 12px;
+    }
+
+    .score-panel {
+        gap: 10px;
     }
 
     .controls-grid {
@@ -846,14 +850,77 @@ canvas {
         z-index: 20;
     }
 
-    .director-panel {
-        top: 210px;
-    }
-
     .event-feed {
         left: 14px;
         bottom: 100px;
         width: 180px;
+    }
+}
+
+@media (max-width: 600px) {
+    #ui-layer {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr);
+        gap: 6px;
+        padding: 8px;
+    }
+
+    .player-panel,
+    .score-panel {
+        padding: 10px 8px;
+    }
+
+    .player-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        margin-bottom: 10px;
+        font-size: 9px;
+        letter-spacing: 0.1em;
+    }
+
+    .player-header.right-align {
+        align-items: flex-end;
+    }
+
+    .bar-group {
+        margin-bottom: 8px;
+    }
+
+    .bar-title {
+        margin-bottom: 4px;
+        font-size: 9px;
+    }
+
+    .bar-track {
+        height: 12px;
+    }
+
+    .score-panel {
+        gap: 8px;
+    }
+
+    #round-label {
+        font-size: 9px;
+        letter-spacing: 0.12em;
+    }
+
+    #scoreboard {
+        font-size: clamp(28px, 8vw, 42px);
+        letter-spacing: 0;
+    }
+
+    #timer {
+        font-size: 30px;
+    }
+
+    .small-button {
+        padding: 8px 10px;
+        font-size: 10px;
+    }
+
+    .director-panel {
+        width: min(200px, calc(100vw - 24px));
+        padding: 9px 10px;
     }
 }
 
