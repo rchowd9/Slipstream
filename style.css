@@ -936,6 +936,18 @@ canvas {
     }
 }
 
+@media (max-width: 360px) {
+    #ui-layer {
+        gap: 2px;
+        padding: 6px;
+    }
+
+    .director-panel {
+        margin-top: 2px;
+        padding: 5px 9px;
+    }
+}
+
 @media (max-width: 600px), (max-height: 720px) {
     #message-overlay {
         padding: 10px;
