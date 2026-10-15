@@ -191,7 +191,6 @@ canvas {
     z-index: 2;
     display: grid;
     gap: 5px;
-    min-width: 190px;
     padding: 11px 14px;
     background: rgba(11, 17, 37, 0.78);
     border: 1px solid rgba(255, 203, 108, 0.32);
