@@ -20,6 +20,7 @@ Slipstream is a 1v1 dash-fighter with a persistent pilot progression layer. Win 
 - Vercel serves the static HTML, CSS, JavaScript, and canvas game.
 - C# .NET 8 isolated Azure Functions provide health checks and match results.
 - Python provides a standard-library analytics report for operators and future dashboards.
+- A standalone Rust library provides reusable combat calculations and tests; the browser game continues to use its existing JavaScript implementation.
 - Azure Table Storage persists the leaderboard when `AzureWebJobsStorage` is configured.
 - Without Azure Storage, the API uses an in-memory store for local development.
 
@@ -58,6 +59,17 @@ python tools/season_report.py --file leaderboard.json --format json
 ```
 
 The report summarizes pilot count, aggregate matches, win rate, and the top five pilots. It uses only Python's standard library.
+
+## Run The Rust Combat Library
+
+Install the Rust toolchain, then run the combat library tests:
+
+```powershell
+cd rust/combat
+cargo test
+```
+
+The crate mirrors the game's loadout profiles, damage and guard calculations, perfect-guard window, and match score. It is not currently part of the browser game's runtime.
 
 ## Deploy
 
