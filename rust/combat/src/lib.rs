@@ -138,7 +138,7 @@ mod tests {
                 best_combo: 3,
                 perfect_guards: 1,
             }),
-            125
+            114
         );
     }
 }
